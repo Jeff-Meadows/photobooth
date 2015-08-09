@@ -74,3 +74,11 @@ class Box(object):
             'name': name,
             'email': email,
         })
+
+    def download_photo(self, file_id, photo_sys_path):
+        print 'downloading photo ', photo_sys_path, ' from box'
+        with open(photo_sys_path, 'wb') as file_handle:
+            self._client.file(file_id).download_to(file_handle)
+
+    def list_files(self):
+        return self._folder.get_items(1000)
