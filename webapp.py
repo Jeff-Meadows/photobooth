@@ -6,12 +6,12 @@ from bottle import Bottle, request, response, static_file
 from datetime import datetime, timedelta
 import os
 import random
-from camera import Camera, TestCamera, MacbookCamera
+from camera import Camera
 from printer import Printer
 
 
 app = Bottle()
-camera = MacbookCamera()
+camera = Camera()
 printer = Printer()
 
 
@@ -42,7 +42,7 @@ def take_image():
 @app.get('/photo')
 def get_image():
     ticket = request.params.get('ticket', 0)
-    while len(camera.photos) <= int(ticket):
+    while len(camera.photos) < int(ticket):
         sleep(0.01)
     return static_file(camera.filename, root='image')
 
