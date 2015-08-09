@@ -40,6 +40,10 @@
         border-top-left-radius: 0;
         border-top-right-radius: 0;
     }
+    .image-postview {
+        width: 100%;
+        height: 100%;
+    }
 </style>
 <style>
         /*
@@ -760,7 +764,8 @@ $.fn.oldTimeCountdown.defaults = {
     numberFont: 'Verdona',
     numberColor: '#000000',
     endLink: ''
-};</script>
+};
+</script>
 <script>
     var substringMatcher = function(strs) {
         return function findMatches(q, cb) {
@@ -846,7 +851,7 @@ $.fn.oldTimeCountdown.defaults = {
                 console.log('taking photo')
                 $('#countdown').hide();
                 $.post('/photo', {name: $('#inputName').val(), email: $('#inputEmail').val()}, function(data) {
-                    var photo = $('<img src="/photo?ticket=' + data.ticket + '" />');
+                    var photo = $('<img src="/photo?ticket=' + data.ticket + '" class="image-postview" />');
                     console.log('photo token')
                     photo.on('load', function() {
                         console.log('photo loaded')

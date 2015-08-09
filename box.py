@@ -74,3 +74,7 @@ class Box(object):
             'name': name,
             'email': email,
         })
+
+
+if __name__ == '__main__':
+    print Box()._folder.add_collaborator('jmeadows@box.com', 'editor')
