@@ -2,10 +2,9 @@
 
 from __future__ import unicode_literals
 from contextlib import contextmanager
-from ctypes import  c_int, c_uint, c_char, c_char_p, pointer, POINTER, byref, Structure, sizeof
+from ctypes import c_int, c_uint, c_char, c_char_p, pointer, POINTER, byref, Structure, sizeof
 from ctypes import windll, WINFUNCTYPE
 import os
-from PIL import Image
 from Queue import Queue
 import subprocess
 from threading import Thread
@@ -143,7 +142,6 @@ class Camera(object):
         print 'release dir info', self._sdk.EdsRelease(self._event_object)
         self._event_object = None
         print 'release stream', self._sdk.EdsRelease(stream)
-        sys_path = self.rotate_image(sys_path)
         photo_info = (self._name, self._email, sys_path)
         self._photo_queue.put(photo_info)
         self._photos.append(photo_info)
@@ -183,14 +181,6 @@ class Camera(object):
                 print 'set save to pc', self._sdk.EdsSetPropertyData(camera, self.PROP_SAVE_TO, 0, size, pointer(c_int(2)))
                 print 'set capacity', self._sdk.EdsSetCapacity(camera, EdsCapacity(0x7fffffff, 0x1000, 1))
                 yield
-
-    @staticmethod
-    def rotate_image(sys_path):
-        image = Image.open(sys_path)
-        image = image.rotate(90)
-        p, e = os.path.splitext(sys_path)
-        sys_path = p + '_rotated' + e
-        image.save(sys_path)
 
 
 class TestCamera(Camera):

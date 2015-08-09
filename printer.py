@@ -30,7 +30,7 @@ class Printer(object):
         os.remove(image_sys_path)
 
     def print_images(self, image_sys_paths):
-        thumbnail_width, thumbnail_height = 570, 725
+        thumbnail_width, thumbnail_height = 870, 525
         desired_ratio = thumbnail_width / thumbnail_height
         images = [Image.open(i[2]) for i in image_sys_paths]
         resized_images = []
