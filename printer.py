@@ -8,6 +8,7 @@ from Queue import Queue
 import subprocess
 from tempfile import gettempdir
 from threading import Thread
+from uuid import uuid4
 
 
 class Printer(object):
@@ -64,7 +65,7 @@ class Printer(object):
         image.paste(image_2, (margin + thumbnail_width + gap, margin))
         image.paste(image_3, (margin, margin + thumbnail_height + gap))
         image.paste(image_4, (margin + thumbnail_width + gap, margin + thumbnail_height + gap))
-        image_sys_path = os.path.join(self._image_dir, '{}.jpg'.format(len(self._images)))
+        image_sys_path = os.path.join(self._image_dir, 'photobooth-final-{}.jpg'.format(uuid4().hex))
         self._images.append(image_sys_path)
         image.save(image_sys_path)
         self._image_queue.put(image_sys_path)

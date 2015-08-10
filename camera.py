@@ -75,59 +75,75 @@ class Camera(object):
     @contextmanager
     def _camera_session(self):
         camera_list_ref = c_int()
-        print 'get list', self._sdk.EdsGetCameraList(byref(camera_list_ref))
+        camera_list_error = self._sdk.EdsGetCameraList(byref(camera_list_ref))
+        print 'get list', camera_list_error
         self._camera = c_int()
-        print 'get camera', self._sdk.EdsGetChildAtIndex(camera_list_ref, 0, byref(self._camera))
+        camera_error = self._sdk.EdsGetChildAtIndex(camera_list_ref, 0, byref(self._camera))
+        print 'get camera', camera_error
         print self._camera
-        print 'open session', self._sdk.EdsOpenSession(self._camera)
+        session_error = self._sdk.EdsOpenSession(self._camera)
+        print 'open session', session_error
         try:
             yield self._camera
         finally:
-            print 'close session', self._sdk.EdsCloseSession(self._camera)
+            close_session_error = self._sdk.EdsCloseSession(self._camera)
+            print 'close session', close_session_error
             self._camera = None
 
     @contextmanager
     def live_view(self):
         #EdsCreateEvfImageRef, EdsDownloadEvfImage, kEdsCameraCommand_DoEvfAf
         size = sizeof(c_int)
-        print self._sdk.EdsSetPropertyData(self._camera, 0x00000501, 0, size, pointer(c_int(1)))  # Turn on EVF
-        print self._sdk.EdsSetPropertyData(self._camera, 0x00000500, 0, size, pointer(c_int(2)))  # Set EVF device to PC
-        print self._sdk.EdsSetPropertyData(self._camera, 0x0000050E, 0, size, pointer(c_int(2)))  # Set AF Mode to live face
+        evf_on_error = self._sdk.EdsSetPropertyData(self._camera, 0x00000501, 0, size, pointer(c_int(1)))
+        print evf_on_error  # Turn on EVF
+        evf_pc_error = self._sdk.EdsSetPropertyData(self._camera, 0x00000500, 0, size, pointer(c_int(2)))
+        print evf_pc_error  # Set EVF device to PC
+        af_live_face_error = self._sdk.EdsSetPropertyData(self._camera, 0x0000050E, 0, size, pointer(c_int(2)))
+        print af_live_face_error  # Set AF Mode to live face
         stream = c_int()
         sys_path = os.path.abspath(os.path.join('evf', 'evf.jpg'))
         sys_path_p = c_char_p()
         sys_path_p.value = sys_path
-        print 'create stream', self._sdk.EdsCreateFileStream(sys_path_p, 1, 2, byref(stream))
+        create_stream_error = self._sdk.EdsCreateFileStream(sys_path_p, 1, 2, byref(stream))
+        print 'create stream', create_stream_error
         #self._sdk.EdsCreateMemoryStream(0, byref(memory_stream))
         evf_image = c_int()
-        print 'create image ref', self._sdk.EdsCreateEvfImageRef(stream, byref(evf_image))
+        create_image_ref_error = self._sdk.EdsCreateEvfImageRef(stream, byref(evf_image))
+        print 'create image ref', create_image_ref_error
         yield evf_image
-        print self._sdk.EdsRelease(evf_image)
-        print self._sdk.EdsRelease(stream)
-        print self._sdk.EdsSetPropertyData(self._camera, 0x00000500, 0, size, pointer(c_int(1)))  # Set EVF device to TFT
-        print self._sdk.EdsSetPropertyData(self._camera, 0x00000501, 0, size, pointer(c_int(0)))  # Turn off EVF
+        release_error = self._sdk.EdsRelease(evf_image)
+        print 'release image', release_error
+        release_error = self._sdk.EdsRelease(stream)
+        print 'release stream', release_error
+        evf_tft_error = self._sdk.EdsSetPropertyData(self._camera, 0x00000500, 0, size, pointer(c_int(1)))
+        print evf_tft_error  # Set EVF device to TFT
+        evf_off_error = self._sdk.EdsSetPropertyData(self._camera, 0x00000501, 0, size, pointer(c_int(0)))
+        print evf_off_error  # Turn off EVF
 
     def get_evf_frame(self, evf_image):
         while True:
-            error = self._sdk.EdsDownloadEvfImage(self._camera, evf_image)
+            download_evf_image_error = self._sdk.EdsDownloadEvfImage(self._camera, evf_image)
+            error = download_evf_image_error
             print 'download image', error
             if not error:
                 break
         sys_path = os.path.abspath(os.path.join('evf', 'evf.jpg'))
-        sys_path = self.rotate_image(sys_path)
         return sys_path
 
     def shoot(self, name, email):
         self._name = name
         self._email = email
-        print 'shutter down', self._sdk.EdsSendCommand(self._camera, 0x00000004, 3)  # Press shutter button completely
-        print 'shutter up', self._sdk.EdsSendCommand(self._camera, 0x00000004, 0)  # Press shutter button off
+        shutter_down_error = self._sdk.EdsSendCommand(self._camera, 0x00000004, 3)
+        print 'shutter down', shutter_down_error  # Press shutter button completely
+        shutter_up_error = self._sdk.EdsSendCommand(self._camera, 0x00000004, 0)
+        print 'shutter up', shutter_up_error  # Press shutter button off
         self._waiting_for_callback = True
         while self._waiting_for_callback:
             print 'get event', self._sdk.EdsGetEvent()
             sleep(.2)
         dir_info = EdsDirectoryItemInfo()
-        print 'get dir info', self._sdk.EdsGetDirectoryItemInfo(self._event_object, pointer(dir_info))
+        get_directory_item_info_error = self._sdk.EdsGetDirectoryItemInfo(self._event_object, pointer(dir_info))
+        print 'get dir info', get_directory_item_info_error
         stream = c_int()
         self._filename = uuid4().hex + dir_info.szFileName
         print self._filename
@@ -135,13 +151,18 @@ class Camera(object):
         print sys_path
         sys_path_p = c_char_p()
         sys_path_p.value = sys_path
-        print 'create file stream', self._sdk.EdsCreateFileStream(sys_path_p, 1, 2, byref(stream))
-        print 'download', self._sdk.EdsDownload(self._event_object, dir_info.Size, stream)
+        file_stream_error = self._sdk.EdsCreateFileStream(sys_path_p, 1, 2, byref(stream))
+        print 'create file stream', file_stream_error
+        download_error = self._sdk.EdsDownload(self._event_object, dir_info.Size, stream)
+        print 'download', download_error
         #sleep(2)
-        print 'dl complete', self._sdk.EdsDownloadComplete(self._event_object)
-        print 'release dir info', self._sdk.EdsRelease(self._event_object)
+        download_complete_error = self._sdk.EdsDownloadComplete(self._event_object)
+        print 'dl complete', download_complete_error
+        release_error = self._sdk.EdsRelease(self._event_object)
+        print 'release dir info', release_error
         self._event_object = None
-        print 'release stream', self._sdk.EdsRelease(stream)
+        release_error = self._sdk.EdsRelease(stream)
+        print 'release stream', release_error
         photo_info = (self._name, self._email, sys_path)
         self._photo_queue.put(photo_info)
         self._photos.append(photo_info)
@@ -174,12 +195,15 @@ class Camera(object):
             with self._camera_session() as camera:
                 object_callback_type = WINFUNCTYPE(c_uint, c_uint, POINTER(c_int), POINTER(c_int))
                 object_callback = object_callback_type(object_callback)
-                print 'set object handler', self._sdk.EdsSetObjectEventHandler(camera, self.OBJECT_EVENT_ALL, object_callback, None)
+                object_error = self._sdk.EdsSetObjectEventHandler(camera, self.OBJECT_EVENT_ALL, object_callback, None)
+                print 'set object handler', object_error
                 property_callback_type = WINFUNCTYPE(c_uint, c_uint, c_uint, c_uint, POINTER(c_int))
                 property_callback = property_callback_type(property_callback)
                 size = sizeof(c_int)
-                print 'set save to pc', self._sdk.EdsSetPropertyData(camera, self.PROP_SAVE_TO, 0, size, pointer(c_int(2)))
-                print 'set capacity', self._sdk.EdsSetCapacity(camera, EdsCapacity(0x7fffffff, 0x1000, 1))
+                save_to_pc_error = self._sdk.EdsSetPropertyData(camera, self.PROP_SAVE_TO, 0, size, pointer(c_int(2)))
+                print 'set save to pc', save_to_pc_error
+                capacity_error = self._sdk.EdsSetCapacity(camera, EdsCapacity(0x7fffffff, 0x1000, 1))
+                print 'set capacity', capacity_error
                 yield
 
 
@@ -265,4 +289,4 @@ if __name__ == '__main__':
                         frame = evf_file.read()
                     with open(os.path.join('evf', str(count) + '.jpg'), 'wb') as evf_log:
                         evf_log.write(frame)
-                    count+=1
+                    count += 1

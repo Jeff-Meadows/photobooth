@@ -23,6 +23,9 @@
             height: 100%;
             width: 100%;
         }
+        .slick-slide>div {
+            height: 50%;
+        }
         .slide img {
             max-height: 100%;
             margin: 0 auto;
@@ -37,23 +40,31 @@
 <script src="static/slick-1.5.7/slick/slick.js"></script>
 <script>
     $(document).ready(function() {
-        $('#slides').slick({
-            autoplay: true,
-            autoplaySpeed: 3000,
-            arrows: false,
-            draggable: false,
-            fade: true
-        });
-
         var slides = [];
         function update() {
             $.get('/ajax/files', function(data) {
+                var slideHtml = '';
+                var first = slides.length == 0;
                 data.files.forEach(function(fileId) {
                     if (slides.indexOf(fileId) === -1) {
                         slides.push(fileId);
-                        $('#slides').slick('slickAdd', '<div class="slide"><img src="/images/' + fileId + '.jpg"</div>');
+                        slideHtml += '<div class="slide"><img src="/images/' + fileId + '.jpg" /></div>';
                     }
                 });
+                if (first) {
+                    $('#slides').append(slideHtml).slick({
+                        autoplay: true,
+                        autoplaySpeed: 3000,
+                        arrows: false,
+                        draggable: false,
+                        fade: true,
+                        rows: 2,
+                        slidesPerRow: 2,
+                        slidesToScroll: 4
+                    });
+                } else if (slideHtml){
+                    $('#slides').slick('slickAdd', slideHtml);
+                }
             })
         }
         update();
