@@ -69,7 +69,10 @@ class Camera(object):
 
     @contextmanager
     def _initialized_sdk(self):
-        print 'initialize', self._sdk.EdsInitializeSDK()
+        initialize_error = self._sdk.EdsInitializeSDK()
+        print 'initialize', initialize_error
+        if initialize_error:
+            raise RuntimeError('Could not inititalize SDK.')
         try:
             yield
         finally:
