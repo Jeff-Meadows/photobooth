@@ -3,13 +3,20 @@
 from __future__ import unicode_literals
 from contextlib import contextmanager
 from ctypes import c_int, c_uint, c_char, c_char_p, pointer, POINTER, byref, Structure, sizeof
-from ctypes import windll, WINFUNCTYPE
 import os
 from Queue import Queue
+import sys
 import subprocess
 from threading import Thread
 from time import sleep
 from uuid import uuid4
+
+if sys.platform == 'darwin':
+    from ctypes import cdll as dll, CFUNCTYPE as functype
+else:
+    from ctypes import windll as dll, WINFUNCTYPE as functype
+
+
 from box import Box
 
 
@@ -58,7 +65,11 @@ class Camera(object):
         self._event_object = None
 
     def _create_sdk(self):
-        self._sdk = windll.LoadLibrary(os.path.join(os.getcwd(), 'Windows', 'EDSDK', 'Dll', 'EDSDK.dll'))
+        if sys.platform == 'darwin':
+            library_path = ('edsdk', 'EDSDK', 'Frameworks', 'EDSDK.Framework', 'Versions', 'A', 'EDSDK')
+        else:
+            library_path = ('Windows', 'EDSDK', 'Dll', 'EDSDK.dll')
+        self._sdk = dll.LoadLibrary(os.path.join(os.getcwd(), *library_path))
 
     def _process_queue(self):
         while True:
@@ -199,11 +210,11 @@ class Camera(object):
 
         with self._initialized_sdk():
             with self._camera_session() as camera:
-                object_callback_type = WINFUNCTYPE(c_uint, c_uint, POINTER(c_int), POINTER(c_int))
+                object_callback_type = functype(c_uint, c_uint, POINTER(c_int), POINTER(c_int))
                 object_callback = object_callback_type(object_callback)
                 object_error = self._sdk.EdsSetObjectEventHandler(camera, self.OBJECT_EVENT_ALL, object_callback, None)
                 print 'set object handler', object_error
-                property_callback_type = WINFUNCTYPE(c_uint, c_uint, c_uint, c_uint, POINTER(c_int))
+                property_callback_type = functype(c_uint, c_uint, c_uint, c_uint, POINTER(c_int))
                 property_callback = property_callback_type(property_callback)
                 size = sizeof(c_int)
                 save_to_pc_error = self._sdk.EdsSetPropertyData(camera, self.PROP_SAVE_TO, 0, size, pointer(c_int(2)))
