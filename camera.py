@@ -62,7 +62,10 @@ class Camera(object):
 
     def _process_queue(self):
         while True:
-            self._box.upload_photo(*self._photo_queue.get())
+            try:
+                self._box.upload_photo(*self._photo_queue.get())
+            except:
+                pass
 
     @contextmanager
     def _initialized_sdk(self):
@@ -114,7 +117,6 @@ class Camera(object):
             if not error:
                 break
         sys_path = os.path.abspath(os.path.join('evf', 'evf.jpg'))
-        sys_path = self.rotate_image(sys_path)
         return sys_path
 
     def shoot(self, name, email):

@@ -58,7 +58,7 @@ class Printer(object):
             print resized_image.size
             resized_images.append(resized_image)
         image_1, image_2, image_3, image_4 = resized_images
-        image = Image.open('photobooth.png')
+        image = Image.open('photobooth-horizontal.png')
         margin, gap = 25, 10
         image.paste(image_1, (margin, margin))
         image.paste(image_2, (margin + thumbnail_width + gap, margin))
