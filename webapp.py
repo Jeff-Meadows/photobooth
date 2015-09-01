@@ -36,7 +36,7 @@ def evf_video():
 
 @app.post('/photo')
 def take_image():
-    return {'ticket': camera.shoot(request.forms.get('name'), request.forms.get('email'))}
+    return {'ticket': camera.shoot(request.forms.get('name'), request.forms.get('message'))}
 
 
 @app.get('/photo')

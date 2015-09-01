@@ -237,6 +237,16 @@
         display: none;
         position: absolute;
     }
+    #preview, #postview {
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+    }
+    #preview img, #postview img {
+        width: 100%;
+        height: 100%;
+    }
     #thanks {
         display: none;
     }
@@ -257,13 +267,13 @@
                 <div id="body"></div>
                 <div id="intro">
                     <h1 class="cover-heading">Meet the Meadows!</h1>
-                    <p class="lead">Enter your name and email address, grab some props, and stand on the X.</p>
+                    <p class="lead">Enter your name and a message for us, grab some props, and stand on the X.</p>
                     <p class="lead">In a few seconds, we'll start taking pictures - 4 in total.</p>
                     <form class="form-signin">
                         <label for="inputName" class="sr-only">Name</label>
                         <input type="text" id="inputName" class="form-control" placeholder="Name" required autofocus>
-                        <label for="inputEmail" class="sr-only">Email address</label>
-                        <input type="email" id="inputEmail" class="form-control" placeholder="Email address" required>
+                        <label for="inputMessage" class="sr-only">Message to the Newlyweds</label>
+                        <input type="text" id="inputMessage" class="form-control" placeholder="Congratulations!" required>
                         <button class="btn btn-lg btn-primary btn-block" type="button" id="submit">Take Photos</button>
                     </form>
                 </div>
@@ -788,25 +798,6 @@ $.fn.oldTimeCountdown.defaults = {
             cb(matches);
         };
     };
-    var attendees = [
-        'Jeff Meadows',
-        'Kelly Sepich',
-        'Kelly Meadows',
-        'Karleen Beaver'
-    ];
-
-    $(document).ready(function() {
-        $('#inputName').typeahead({
-                    hint: true,
-                    highlight: true,
-                    minLength: 1
-                },
-                {
-                    name: 'attendees',
-                    source: substringMatcher(attendees)
-                });
-
-    });
 </script>
 <script>
     var cameraDelay = 1000, five = 5000 - cameraDelay;
@@ -840,7 +831,7 @@ $.fn.oldTimeCountdown.defaults = {
                 console.log('showing preview')
                 $('#countdown').css({opacity: '0.3'});
                 var salt = new Array(11).join((Math.random().toString(36)+'00000000000000000').slice(2, 18)).slice(0, 10);
-                $('#preview').show().append($('<img src="/evf?seconds=5&salt=' + salt + '" style="width: 100%; height: 100%;" />'));
+                $('#preview').show().append($('<img src="/evf?seconds=5&salt=' + salt + '" />'));
                 setTimeout(callback, five);
             }
             function hidePreview() {
@@ -850,7 +841,7 @@ $.fn.oldTimeCountdown.defaults = {
             function takePhoto(callback) {
                 console.log('taking photo')
                 $('#countdown').hide();
-                $.post('/photo', {name: $('#inputName').val(), email: $('#inputEmail').val()}, function(data) {
+                $.post('/photo', {name: $('#inputName').val(), message: $('#inputMessage').val()}, function(data) {
                     var photo = $('<img src="/photo?ticket=' + data.ticket + '" class="image-postview" />');
                     console.log('photo token')
                     photo.on('load', function() {

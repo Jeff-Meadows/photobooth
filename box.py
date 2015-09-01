@@ -67,12 +67,12 @@ class Box(object):
             self._session.add(PhotoBoothInfo(key='folder_id', value=self._folder.object_id))
             self._session.commit()
 
-    def upload_photo(self, name, email, photo_sys_path):
+    def upload_photo(self, name, message, photo_sys_path):
         print 'uploading photo ', photo_sys_path, ' to box'
         photo = self._folder.upload(photo_sys_path)
         photo.metadata().create({
             'name': name,
-            'email': email,
+            'message': message,
         })
 
     def download_photo(self, file_id, photo_sys_path):

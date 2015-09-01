@@ -59,7 +59,7 @@ class Camera(object):
         self._photo_thread.daemon = True
         self._photo_thread.start()
         self._name = None
-        self._email = None
+        self._message = None
         self._photos = []
         self._waiting_for_callback = False
         self._event_object = None
@@ -141,9 +141,9 @@ class Camera(object):
         sys_path = os.path.abspath(os.path.join('evf', 'evf.jpg'))
         return sys_path
 
-    def shoot(self, name, email):
+    def shoot(self, name, message):
         self._name = name
-        self._email = email
+        self._message = message
         shutter_down_error = self._sdk.EdsSendCommand(self._camera, 0x00000004, 3)
         print 'shutter down', shutter_down_error  # Press shutter button completely
         shutter_up_error = self._sdk.EdsSendCommand(self._camera, 0x00000004, 0)
@@ -174,7 +174,7 @@ class Camera(object):
         self._event_object = None
         release_error = self._sdk.EdsRelease(stream)
         print 'release stream', release_error
-        photo_info = (self._name, self._email, sys_path)
+        photo_info = (self._name, self._message, sys_path)
         self._photo_queue.put(photo_info)
         self._photos.append(photo_info)
         return len(self._photos)
@@ -236,7 +236,7 @@ class TestCamera(Camera):
         import time
         return self._test_images[int(time.time()) % 3]
 
-    def shoot(self, name, email):
+    def shoot(self, name, message):
         return -1
 
 
@@ -273,13 +273,13 @@ class MacbookCamera(Camera):
                 os.remove(os.path.join('evf', s))
             return os.path.join('evf', last)
 
-    def shoot(self, name, email):
+    def shoot(self, name, message):
         self._name = name
-        self._email = email
+        self._message = message
         self._filename = 'photobooth-{}.jpg'.format(len(self._photos))
         file_sys_path = os.path.join('image', self._filename)
         subprocess.call(['./imagesnap', '-q', '-w', '1', file_sys_path])
-        photo_info = (self._name, self._email, file_sys_path)
+        photo_info = (self._name, self._message, file_sys_path)
         self._photo_queue.put(photo_info)
         self._photos.append(photo_info)
         return len(self._photos) - 1
