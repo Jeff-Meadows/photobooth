@@ -73,11 +73,17 @@ class Camera(object):
 
     def _process_queue(self):
         while True:
-            self._box.upload_photo(*self._photo_queue.get())
+            try:
+                self._box.upload_photo(*self._photo_queue.get())
+            except:
+                pass
 
     @contextmanager
     def _initialized_sdk(self):
-        print 'initialize', self._sdk.EdsInitializeSDK()
+        initialize_error = self._sdk.EdsInitializeSDK()
+        print 'initialize', initialize_error
+        if initialize_error:
+            raise RuntimeError('Could not inititalize SDK.')
         try:
             yield
         finally:

@@ -82,7 +82,3 @@ class Box(object):
 
     def list_files(self):
         return self._folder.get_items(1000)
-
-
-if __name__ == '__main__':
-    print Box()._folder.add_collaborator('jmeadows@box.com', 'editor')
