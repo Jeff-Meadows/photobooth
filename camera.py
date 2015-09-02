@@ -150,10 +150,14 @@ class Camera(object):
     def shoot(self, name, message):
         self._name = name
         self._message = message
-        shutter_down_error = self._sdk.EdsSendCommand(self._camera, 0x00000004, 3)
-        print 'shutter down', shutter_down_error  # Press shutter button completely
-        shutter_up_error = self._sdk.EdsSendCommand(self._camera, 0x00000004, 0)
-        print 'shutter up', shutter_up_error  # Press shutter button off
+        shutter_down_error = 1
+        while shutter_down_error:
+            shutter_down_error = self._sdk.EdsSendCommand(self._camera, 0x00000004, 3)
+            print 'shutter down', shutter_down_error  # Press shutter button completely
+        shutter_up_error = 1
+        while shutter_up_error:
+            shutter_up_error = self._sdk.EdsSendCommand(self._camera, 0x00000004, 0)
+            print 'shutter up', shutter_up_error  # Press shutter button off
         self._waiting_for_callback = True
         while self._waiting_for_callback:
             print 'get event', self._sdk.EdsGetEvent()
