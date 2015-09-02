@@ -26,7 +26,7 @@ class Printer(object):
 
     def _print_photo(self, image_sys_path):
         import shutil
-        shutil.copy(image_sys_path, '.')
+        shutil.copy(image_sys_path, 'image/')
         subprocess.call(['ImagePrint.exe', image_sys_path])
         os.remove(image_sys_path)
 

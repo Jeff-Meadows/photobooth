@@ -1,11 +1,12 @@
 # coding: utf-8
 
 from __future__ import unicode_literals
-from time import sleep
+from gevent import monkey; monkey.patch_all()
 from bottle import Bottle, request, response, static_file
 from datetime import datetime, timedelta
 import os
 import random
+from time import sleep
 from camera import Camera
 from printer import Printer
 
@@ -17,10 +18,10 @@ printer = Printer()
 
 @app.get('/evf')
 def evf_video():
+    seconds = int(request.params.get('seconds', 5))
+    stop_time = datetime.now() + timedelta(seconds=seconds)
+    response.content_type = 'multipart/x-mixed-replace; boundary=frame'
     try:
-        seconds = int(request.params.get('seconds', 5))
-        stop_time = datetime.now() + timedelta(seconds=seconds)
-        response.content_type = 'multipart/x-mixed-replace; boundary=frame'
         with camera.live_view() as view:
             while datetime.now() < stop_time:
                 filename = camera.get_evf_frame(view)
@@ -69,4 +70,4 @@ def static(filename):
 
 
 with camera.run():
-    app.run(debug=True)
+    app.run(debug=True, server='gevent')
