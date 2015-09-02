@@ -112,11 +112,11 @@ class Camera(object):
         #EdsCreateEvfImageRef, EdsDownloadEvfImage, kEdsCameraCommand_DoEvfAf
         size = sizeof(c_int)
         evf_on_error = self._sdk.EdsSetPropertyData(self._camera, 0x00000501, 0, size, pointer(c_int(1)))
-        print evf_on_error  # Turn on EVF
+        print 'evf on', evf_on_error  # Turn on EVF
         evf_pc_error = self._sdk.EdsSetPropertyData(self._camera, 0x00000500, 0, size, pointer(c_int(2)))
-        print evf_pc_error  # Set EVF device to PC
+        print 'evf pc', evf_pc_error  # Set EVF device to PC
         af_live_face_error = self._sdk.EdsSetPropertyData(self._camera, 0x0000050E, 0, size, pointer(c_int(2)))
-        print af_live_face_error  # Set AF Mode to live face
+        print 'evf af live face', af_live_face_error  # Set AF Mode to live face
         stream = c_int()
         sys_path = os.path.abspath(os.path.join('evf', 'evf.jpg'))
         sys_path_p = c_char_p()
@@ -133,9 +133,9 @@ class Camera(object):
         release_error = self._sdk.EdsRelease(stream)
         print 'release stream', release_error
         evf_tft_error = self._sdk.EdsSetPropertyData(self._camera, 0x00000500, 0, size, pointer(c_int(1)))
-        print evf_tft_error  # Set EVF device to TFT
+        print 'evf tft', evf_tft_error  # Set EVF device to TFT
         evf_off_error = self._sdk.EdsSetPropertyData(self._camera, 0x00000501, 0, size, pointer(c_int(0)))
-        print evf_off_error  # Turn off EVF
+        print 'evf off', evf_off_error  # Turn off EVF
 
     def get_evf_frame(self, evf_image):
         while True:
