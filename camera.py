@@ -20,6 +20,17 @@ else:
 from box import Box
 
 
+class ComThread(Thread):
+    def __init__(self, target=None, **kwargs):
+        def _start():
+            if sys.platform == 'win32':
+                import pythoncom
+                pythoncom.CoInitialize()
+                target()
+
+        super(ComThread, self).__init__(target=_start, **kwargs)
+
+
 class EdsDirectoryItemInfo(Structure):
     _fields_ = [
         ('Size', c_uint),
@@ -63,6 +74,8 @@ class Camera(object):
         self._photos = []
         self._waiting_for_callback = False
         self._event_object = None
+        self._no_shutdown_thread = None
+        self._stop_no_shutdown_thread = False
 
     def _create_sdk(self):
         if sys.platform == 'darwin':
@@ -100,12 +113,30 @@ class Camera(object):
         print self._camera
         session_error = self._sdk.EdsOpenSession(self._camera)
         print 'open session', session_error
+        self._shutdown_thread = ComThread(target=self._extend_shutdown)
+        self._shutdown_thread.daemon = True
+        self._shutdown_thread.start()
+        ui_lock_error = self._sdk.EdsSendStatusCommand(self._camera, 0, 0)
+        print 'lock ui', ui_lock_error
         try:
             yield self._camera
         finally:
+            ui_unlock_error = self._sdk.EdsSendStatusCommand(self._camera, 1, 0)
+            print 'unlock ui', ui_unlock_error
             close_session_error = self._sdk.EdsCloseSession(self._camera)
             print 'close session', close_session_error
             self._camera = None
+            self._no_shutdown_thread = True
+            self._shutdown_thread = None
+
+    def _extend_shutdown(self):
+        while not self._no_shutdown_thread:
+            sleep(60)
+            try:
+                self._sdk.EdsSendCommand(self._camera, 0x01, 0)
+            except:
+                pass
+        self._no_shutdown_thread = False
 
     @contextmanager
     def live_view(self):
