@@ -1,7 +1,10 @@
 # coding: utf-8
 
 from __future__ import unicode_literals
-from boxsdk import JWTAuth, Client
+
+from threading import Thread
+
+from boxsdk import JWTAuth, LoggingClient as Client
 import sqlalchemy
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -26,7 +29,7 @@ class Box(object):
     _ENTERPRISE_ID = Configuration.ENTERPRISE_ID
     _PASSPHRASE = Configuration.PASSPHRASE
 
-    def __init__(self):
+    def __init__(self, queue):
         self._db_engine = sqlalchemy.create_engine('sqlite+pysqlite:///photobooth.db')
         self._session_maker = sessionmaker(bind=self._db_engine, autoflush=True)
         self._session = self._session_maker()
@@ -66,14 +69,14 @@ class Box(object):
             self._folder = self._uploader.folder('0').create_subfolder('Photobooth Images')
             self._session.add(PhotoBoothInfo(key='folder_id', value=self._folder.object_id))
             self._session.commit()
+        self._queue = queue
+        self._photo_thread = Thread(target=self._process_queue)
+        self._photo_thread.daemon = True
+        self._photo_thread.start()
 
-    def upload_photo(self, name, message, photo_sys_path):
+    def upload_photo(self, photo_sys_path):
         print 'uploading photo ', photo_sys_path, ' to box'
-        photo = self._folder.upload(photo_sys_path)
-        photo.metadata().create({
-            'name': name,
-            'message': message,
-        })
+        self._folder.upload(photo_sys_path)
 
     def download_photo(self, file_id, photo_sys_path):
         print 'downloading photo ', photo_sys_path, ' from box'
@@ -82,3 +85,11 @@ class Box(object):
 
     def list_files(self):
         return self._folder.get_items(1000)
+
+    def _process_queue(self):
+        while True:
+            try:
+                self.upload_photo(self._queue.get())
+                self._queue.task_done()
+            except:
+                pass
