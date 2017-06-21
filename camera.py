@@ -118,7 +118,7 @@ class EdsCamera(BaseCamera):
         save_to_pc = c_int(self.PROP_VAL_SAVE_TO_PC)
         save_to_pc_error = self._sdk.EdsSetPropertyData(self._camera, self.PROP_SAVE_TO, 0, sizeof(save_to_pc), byref(save_to_pc))
         print 'set save to pc', save_to_pc_error
-        capacity_error = self._sdk.EdsSetCapacity(camera, EdsCapacity(0x7fffffff, 0x1000, 1))
+        capacity_error = self._sdk.EdsSetCapacity(self._camera, EdsCapacity(0x7fffffff, 0x1000, 1))
         print 'set capacity', capacity_error
         try:
             yield self._camera

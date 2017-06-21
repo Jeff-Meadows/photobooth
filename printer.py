@@ -62,7 +62,7 @@ class Printer(object):
                 image_sys_path,
             ])
         else:
-            subprocess.call(['ImagePrint.exe', image_sys_path])
+            subprocess.call(['lib/ImagePrint.exe', image_sys_path])
         os.remove(image_sys_path)
 
     def print_images(self, image_sys_paths):
