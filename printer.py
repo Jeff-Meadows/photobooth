@@ -25,6 +25,8 @@ class Printer(object):
         self._shutting_down = False
 
     def shutdown(self):
+        self._incoming_image_queue.join()
+        self._processed_image_queue.join()
         self._shutting_down = True
 
     def _process_incoming_queue(self):
@@ -38,6 +40,7 @@ class Printer(object):
             if len(incoming_images) == 4:
                 self.print_images(incoming_images)
                 del incoming_images[:]
+            self._incoming_image_queue.task_done()
 
     def _process_print_queue(self):
         while True:

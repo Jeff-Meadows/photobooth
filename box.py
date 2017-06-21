@@ -2,6 +2,7 @@
 
 from __future__ import unicode_literals
 
+from Queue import Empty
 from threading import Thread
 
 from boxsdk import JWTAuth, LoggingClient as Client
@@ -40,6 +41,7 @@ class Box(object):
             client_secret=self._CLIENT_SECRET,
             enterprise_id=self._ENTERPRISE_ID,
             rsa_private_key_file_sys_path='private_key.pem',
+            jwt_key_id=Configuration.JWT_KEY_ID,
             rsa_private_key_passphrase=self._PASSPHRASE,
         )
         self._client = Client(self._auth)
@@ -57,6 +59,7 @@ class Box(object):
             client_id=self._CLIENT_ID,
             client_secret=self._CLIENT_SECRET,
             enterprise_id=self._ENTERPRISE_ID,
+            jwt_key_id=Configuration.JWT_KEY_ID,
             rsa_private_key_file_sys_path='private_key.pem',
             rsa_private_key_passphrase=self._PASSPHRASE,
         )
@@ -70,6 +73,7 @@ class Box(object):
             self._session.add(PhotoBoothInfo(key='folder_id', value=self._folder.object_id))
             self._session.commit()
         self._queue = queue
+        self._shutting_down = False
         self._photo_thread = Thread(target=self._process_queue)
         self._photo_thread.daemon = True
         self._photo_thread.start()
@@ -87,9 +91,21 @@ class Box(object):
         return self._folder.get_items(1000)
 
     def _process_queue(self):
-        while True:
+        while not self._shutting_down:
             try:
-                self.upload_photo(self._queue.get())
+                try:
+                    photo = self._queue.get(timetou=1)
+                except Empty:
+                    continue
+                self.upload_photo(photo)
                 self._queue.task_done()
             except:
                 pass
+
+    def shutdown(self):
+        self._queue.join()
+        self._shutting_down = True
+
+
+if __name__ == '__main__':
+    box = Box(None)

@@ -4,6 +4,7 @@ from __future__ import unicode_literals, absolute_import
 
 from contextlib import contextmanager
 from Queue import Queue, Empty
+from threading import Thread
 
 from box import Box
 from camera import EdsCamera as Camera
@@ -20,8 +21,9 @@ class App(object):
         self._camera = Camera(self._camera_queue)
         self._printer = Printer(self._printer_queue)
         self._shutting_down = False
+        self._process_camera_queue_thread = Thread(target=self._process_camera_queue)
+        self._process_camera_queue_thread.start()
 
-    @contextmanager
     def photobooth_session(self):
         with self._camera.run():
             for _ in xrange(4):
@@ -41,7 +43,14 @@ class App(object):
                 continue
             self._box_queue.put(photo)
             self._printer_queue.put(photo)
+            self._camera_queue.task_done()
+
+    def shutdown(self):
+        self._box.shutdown()
+        self._printer.shutdown()
 
 
 if __name__ == '__main__':
     app = App()
+    app.photobooth_session()
+
