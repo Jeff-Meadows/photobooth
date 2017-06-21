@@ -41,6 +41,7 @@ class App(object):
                 photo = self._camera_queue.get(timeout=1)
             except Empty:
                 continue
+            print 'got a photo from the camera', photo
             self._box_queue.put(photo)
             self._printer_queue.put(photo)
             self._camera_queue.task_done()
@@ -53,4 +54,4 @@ class App(object):
 if __name__ == '__main__':
     app = App()
     app.photobooth_session()
-
+    app.shutdown()

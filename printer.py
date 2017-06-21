@@ -3,6 +3,7 @@
 from __future__ import unicode_literals, division
 import math
 import os
+import sys
 from PIL import Image
 from Queue import Queue, Empty
 import subprocess
@@ -19,10 +20,13 @@ class Printer(object):
         self._images = []
         self._incoming_image_queue = queue
         self._processed_image_queue = Queue()
+        self._shutting_down = False
         self._printer_thread = Thread(target=self._process_print_queue)
         self._printer_thread.daemon = True
         self._printer_thread.start()
-        self._shutting_down = False
+        self._processor_thread = Thread(target=self._process_incoming_queue)
+        self._processor_thread.daemon = True
+        self._processor_thread.start()
 
     def shutdown(self):
         self._incoming_image_queue.join()
@@ -38,6 +42,7 @@ class Printer(object):
                 continue
             incoming_images.append(image)
             if len(incoming_images) == 4:
+                print 'printing', incoming_images
                 self.print_images(incoming_images)
                 del incoming_images[:]
             self._incoming_image_queue.task_done()
@@ -68,7 +73,7 @@ class Printer(object):
     def print_images(self, image_sys_paths):
         thumbnail_width, thumbnail_height = 870, 525
         desired_ratio = thumbnail_width / thumbnail_height
-        images = [Image.open(i[2]) for i in image_sys_paths]
+        images = [Image.open(i) for i in image_sys_paths]
         resized_images = []
         for image in images:
             x, y = image.size

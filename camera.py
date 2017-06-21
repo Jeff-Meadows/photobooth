@@ -138,7 +138,7 @@ class EdsCamera(BaseCamera):
         while not self._stop_no_shutdown_thread:
             sleep(60)
             try:
-                self._sdk.EdsSendCommand(self._camera, self.COMMAND_EXTEND_SHUTDOWN, 0)
+                print 'suspend shutdown', self._sdk.EdsSendCommand(self._camera, self.COMMAND_EXTEND_SHUTDOWN, 0)
             except:
                 pass
 

@@ -72,10 +72,10 @@ class Box(object):
             self._folder = self._uploader.folder('0').create_subfolder('Photobooth Images')
             self._session.add(PhotoBoothInfo(key='folder_id', value=self._folder.object_id))
             self._session.commit()
+        self._folder.get()
         self._queue = queue
         self._shutting_down = False
         self._photo_thread = Thread(target=self._process_queue)
-        self._photo_thread.daemon = True
         self._photo_thread.start()
 
     def upload_photo(self, photo_sys_path):
@@ -91,12 +91,14 @@ class Box(object):
         return self._folder.get_items(1000)
 
     def _process_queue(self):
+        print 'processing box uploads'
         while not self._shutting_down:
             try:
                 try:
-                    photo = self._queue.get(timetou=1)
+                    photo = self._queue.get(timeout=1)
                 except Empty:
                     continue
+                print 'uploading', photo, 'to box'
                 self.upload_photo(photo)
                 self._queue.task_done()
             except:
