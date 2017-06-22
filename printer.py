@@ -1,25 +1,19 @@
 # coding: utf-8
 
 from __future__ import unicode_literals, division
-import math
-import os
-import sys
-from PIL import Image
-from Queue import Queue, Empty
-import subprocess
-from tempfile import gettempdir
-from threading import Thread
-from uuid import uuid4
 
-from conf import Configuration
+from Queue import Empty
+import subprocess
+from threading import Thread
+
+from arranger import Arranger
 
 
 class Printer(object):
     def __init__(self, queue):
-        self._image_dir = gettempdir()
-        self._images = []
         self._incoming_image_queue = queue
         self._processed_image_queue = Queue()
+        self._arranger = Arranger(self._processed_image_queue)
         self._shutting_down = False
         self._printer_thread = Thread(target=self._process_print_queue)
         self._printer_thread.daemon = True
@@ -43,7 +37,7 @@ class Printer(object):
             incoming_images.append(image)
             if len(incoming_images) == 4:
                 print 'printing', incoming_images
-                self.print_images(incoming_images)
+                self._arranger.print_images(incoming_images)
                 del incoming_images[:]
             self._incoming_image_queue.task_done()
 
@@ -68,47 +62,13 @@ class Printer(object):
             ])
         else:
             subprocess.call(['lib/ImagePrint.exe', image_sys_path])
-        os.remove(image_sys_path)
-
-    def print_images(self, image_sys_paths):
-        thumbnail_width, thumbnail_height = 870, 525
-        desired_ratio = thumbnail_width / thumbnail_height
-        images = [Image.open(i) for i in image_sys_paths]
-        resized_images = []
-        for image in images:
-            x, y = image.size
-            ratio = x / y
-            if ratio < desired_ratio:
-                if x < thumbnail_width:
-                    image = image.resize((thumbnail_width, int(thumbnail_width / x * y)))
-                    x, y = image.size
-                    ratio = x / y
-                # image too tall
-                desired_height = x / desired_ratio
-                height_difference = (y - desired_height) / 2
-                resized_image = image.crop(
-                    (0, int(math.floor(height_difference)), x, y - int(math.floor(height_difference))),
-                )
-            else:
-                resized_image = image
-            resized_image.thumbnail((thumbnail_width, thumbnail_height))
-            resized_images.append(resized_image)
-        image_1, image_2, image_3, image_4 = resized_images
-        image = Image.open(Configuration.TEMPLATE_SYS_PATH)
-        margin, gap = 25, 10
-        image.paste(image_1, (margin, margin))
-        image.paste(image_2, (margin + thumbnail_width + gap, margin))
-        image.paste(image_3, (margin, margin + thumbnail_height + gap))
-        image.paste(image_4, (margin + thumbnail_width + gap, margin + thumbnail_height + gap))
-        image_sys_path = os.path.join(self._image_dir, 'photobooth-final-{}.jpg'.format(uuid4().hex))
-        self._images.append(image_sys_path)
-        image.save(image_sys_path)
-        self._processed_image_queue.put(image_sys_path)
 
 
 if __name__ == '__main__':
     from Queue import Queue
     import sys
     queue = Queue()
-    Printer(queue).print_images([(None, None, a) for a in sys.argv[1:]])
-    queue.join()
+    printer = Printer(queue)
+    for a in sys.argv[1:]:
+        queue.put(a)
+    printer.shutdown()
